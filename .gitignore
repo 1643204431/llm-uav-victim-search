@@ -1,0 +1,42 @@
+# ── Python ───────────────────────────────────────────────────────────
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+.eggs/
+build/
+dist/
+
+# Virtual environments
+venv/
+.venv/
+env/
+
+# Test / type-checker caches
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# ── macOS ────────────────────────────────────────────────────────────
+.DS_Store
+
+# ── Editor / IDE ─────────────────────────────────────────────────────
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# ── Claude Code per-project state ────────────────────────────────────
+# This directory contains an allowlist of bash commands that may include
+# inlined API keys; never commit it.
+.claude/
+
+# ── Environment / secrets ────────────────────────────────────────────
+.env
+.env.local
+*.key
+
+# ── Locally generated experiment artifacts ──────────────────────────
+# The public repository contains source code only. Fresh runs create
+# JSONL results, figures, response caches, and per-run checkpoints here.
+results/

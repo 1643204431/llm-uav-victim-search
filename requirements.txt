@@ -1,0 +1,8 @@
+# Direct dependencies used for the validated experiment environment.
+numpy==2.0.2
+matplotlib==3.9.4
+
+# LLM client for the formal DeepSeek and Qwen configurations, both through
+# OpenAI-compatible endpoints.
+openai==2.29.0
+httpx[socks]==0.28.1
