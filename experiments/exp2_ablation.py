@@ -6,6 +6,9 @@ Conditions:
     llm_direct    : LLM outputs UAV assignments directly
     no_rag        : system prompt omits the SAR domain knowledge block
     no_cot        : system prompt removes STEP 1 / STEP 2 framing
+    no_bottleneck : replay each Ours cycle; keep its state, priorities,
+                    selected cells, and search outcome, but randomly match
+                    UAVs to cells without propagating the random branch
 
 The "full" baseline (all components ON) is NOT re-run here — it is the
 canonical ``ours`` row in exp1's output. analyze.py pulls it from the
@@ -22,19 +25,24 @@ import argparse
 
 from _common import (
     run_suite, default_output_path, decision_cache_setup,
-    add_run_control_args, public_path,
+    add_run_control_args, public_path, stable_run_id,
 )
 from simulation.config import SEED_BASE
 
 
 # label → ablation_kwargs (what to flip off)
 ABLATIONS = {
-    "no_rag":        dict(use_rag=False, use_cot=True,  use_energy_filter=True),
-    "no_cot":        dict(use_rag=True,  use_cot=False, use_energy_filter=True),
+    "no_rag": dict(use_rag=False, use_cot=True, use_energy_filter=True),
+    "no_cot": dict(use_rag=True, use_cot=False, use_energy_filter=True),
+    "no_bottleneck": dict(use_rag=True, use_cot=True,
+                          use_energy_filter=True,
+                          matching_policy="random"),
 }
 
 
-DEFAULT_CONDITIONS = ["llm_direct", "no_rag", "no_cot"]
+DEFAULT_CONDITIONS = [
+    "llm_direct", "no_rag", "no_cot", "no_bottleneck",
+]
 
 
 def build_specs(conditions=None, seeds=None, *, provider=None,
@@ -50,7 +58,7 @@ def build_specs(conditions=None, seeds=None, *, provider=None,
             ablation_kwargs = None
         else:
             method = "ours_ablated"
-            ablation_kwargs = ABLATIONS[condition]
+            ablation_kwargs = dict(ABLATIONS[condition])
         for i, seed in enumerate(seeds):
             spec = {
                 "method": method,
@@ -64,7 +72,21 @@ def build_specs(conditions=None, seeds=None, *, provider=None,
                         "variant": condition, "replicate": i},
             }
             if ablation_kwargs is not None:
-                spec["ablation_kwargs"] = ablation_kwargs
+                run_ablation_kwargs = dict(ablation_kwargs)
+                if condition == "no_bottleneck":
+                    spec["dump_priorities"] = True
+                    run_ablation_kwargs["assignment_seed"] = seed
+                    run_ablation_kwargs["trajectory_replay_run_id"] = stable_run_id({
+                        "method": "ours",
+                        "seed": seed,
+                        "provider": provider,
+                        "max_epochs": max_epochs,
+                        "max_time": max_time,
+                        "time_budget": time_budget,
+                        "dump_priorities": True,
+                        "tag": {"exp": "1"},
+                    })
+                spec["ablation_kwargs"] = run_ablation_kwargs
             specs.append(spec)
     return specs
 

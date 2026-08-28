@@ -18,13 +18,13 @@ from exp5_case_study import build_specs as build_exp5
 from simulation.config import BATCH_SIZE, SEED_BASE
 
 
-EXPECTED_COUNTS = {"1": 35, "2": 15, "3": 40, "4": 20, "5": 1}
+EXPECTED_COUNTS = {"1": 35, "2": 20, "3": 40, "4": 20, "5": 1}
 
 
 def build_manifest(max_epochs: int = 40,
                    exp3_assignment_budget: int =
                    DEFAULT_ASSIGNMENT_BUDGET) -> list:
-    """Return all 111 run specs in deterministic experiment order."""
+    """Return all 116 run specs in deterministic experiment order."""
     seeds = [SEED_BASE + i for i in range(5)]
     specs = []
     specs.extend(build_exp1(seeds=seeds, max_epochs=max_epochs))
@@ -38,8 +38,8 @@ def build_manifest(max_epochs: int = 40,
 
 def validate_manifest(specs: list) -> dict:
     """Raise on a duplicated, misplaced, or incomplete experiment run."""
-    if len(specs) != 111:
-        raise ValueError(f"expected 111 runs, found {len(specs)}")
+    if len(specs) != 116:
+        raise ValueError(f"expected 116 runs, found {len(specs)}")
 
     counts = Counter(spec["tag"]["exp"] for spec in specs)
     if dict(counts) != EXPECTED_COUNTS:
@@ -75,7 +75,8 @@ def validate_manifest(specs: list) -> dict:
         spec["tag"]["condition"]
         for spec in specs if spec["tag"]["exp"] == "2"
     }
-    if exp2_conditions != {"llm_direct", "no_rag", "no_cot"}:
+    if exp2_conditions != {
+            "llm_direct", "no_rag", "no_cot", "no_bottleneck"}:
         raise ValueError(
             f"Exp. 2 conditions are {sorted(exp2_conditions)}")
 

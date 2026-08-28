@@ -47,12 +47,13 @@ class BatchSweepTests(unittest.TestCase):
         self.assertEqual(config.BATCH_SIZE, 10)
         self.assertEqual(simulator_module.BATCH_SIZE, 10)
 
-    def test_complete_manifest_contains_111_unique_runs(self):
+    def test_complete_manifest_contains_116_unique_runs(self):
         specs = build_manifest()
         summary = validate_manifest(specs)
 
-        self.assertEqual(summary["total"], 111)
+        self.assertEqual(summary["total"], 116)
         self.assertEqual(summary["counts"]["1"], 35)
+        self.assertEqual(summary["counts"]["2"], 20)
         self.assertEqual(summary["counts"]["3"], 40)
         self.assertTrue(all("_N10_B" in spec["run_id"] for spec in specs))
 

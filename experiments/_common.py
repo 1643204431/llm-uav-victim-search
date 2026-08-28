@@ -32,6 +32,7 @@ import agent.decision as _decision  # noqa: E402
 from simulation.grid_map import GridMap  # noqa: E402
 from simulation.simulator import Simulator  # noqa: E402
 from agent import get_decision_fn  # noqa: E402
+from no_bottleneck_replay import replay_no_bottleneck  # noqa: E402
 
 
 RESULTS_DIR = pathlib.Path(_ROOT / "results")
@@ -298,17 +299,30 @@ def run_single(method: str, seed: int, *,
     _decision.set_dump_priorities(dump_priorities)
 
     try:
-        rng = np.random.default_rng(seed)
-        grid_map = GridMap()
-        sim = Simulator(grid_map, rng)
-
         kw = dict(ablation_kwargs or {})
-        fn = get_decision_fn(method, rng=rng, provider=provider,
-                             verbose=verbose, **kw)
-
         t0 = time.time()
-        results = sim.run(fn, max_time=max_time, max_epochs=max_epochs,
-                          time_budget=time_budget)
+        replay_source_run_id = kw.pop("trajectory_replay_run_id", None)
+        if replay_source_run_id is not None:
+            matching_policy = kw.pop("matching_policy", None)
+            if method != "ours_ablated" or matching_policy != "random":
+                raise ValueError(
+                    "trajectory replay is reserved for w/o Bottleneck")
+            source_path = result_path(replay_source_run_id)
+            with open(source_path) as f:
+                source_result = json.load(f)
+            if int(source_result.get("seed", -1)) != int(seed):
+                raise ValueError("Ours replay source uses a different seed")
+            results = replay_no_bottleneck(
+                source_result,
+                assignment_seed=kw.get("assignment_seed", seed))
+        else:
+            rng = np.random.default_rng(seed)
+            grid_map = GridMap()
+            sim = Simulator(grid_map, rng)
+            fn = get_decision_fn(method, rng=rng, provider=provider,
+                                 verbose=verbose, **kw)
+            results = sim.run(fn, max_time=max_time, max_epochs=max_epochs,
+                              time_budget=time_budget)
         elapsed = time.time() - t0
     finally:
         # Worker processes can execute several specs sequentially.  Never
@@ -520,6 +534,14 @@ def is_completed(spec: dict) -> bool:
             else _DEFAULT_BATCH_SIZE)
         and bool(result.get("priority_snapshots_enabled", False)) ==
             bool(spec.get("dump_priorities", False))
+        and (
+            (spec.get("ablation_kwargs") or {}).get(
+                "trajectory_replay_run_id") is None
+            or (result.get("ablation") or {}).get(
+                "trajectory_replay_run_id") ==
+            (spec.get("ablation_kwargs") or {}).get(
+                "trajectory_replay_run_id")
+        )
     )
 
 

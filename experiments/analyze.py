@@ -1002,7 +1002,7 @@ def analyze_combined(exp1_path, exp2_path):
     """Emit the main comparison table spanning:
 
       A. Baselines + proposed (Exp 1, 7 methods × 5 seeds)
-      B. LLM-Direct + ablations (Exp 2, 3 conditions × 5 seeds,
+      B. LLM-Direct + ablations (Exp 2, 4 conditions × 5 seeds,
          full = Exp 1 ours)
     Cross-backbone evidence is emitted independently by
     :func:`analyze_cross_backbone`.
@@ -1037,13 +1037,17 @@ def analyze_combined(exp1_path, exp2_path):
     by_variant_B = defaultdict(list)
     for r in exp2_rows:
         by_variant_B[r.get("variant", "?")].append(r)
-    ablation_order = ["llm_direct", "no_rag", "no_cot"]
+    ablation_order = [
+        "llm_direct", "no_rag", "no_cot", "no_bottleneck",
+    ]
     section_B = []
     for v in ablation_order:
         rs = by_variant_B.get(v, [])
         if rs:
-            label = ("LLM-Direct" if v == "llm_direct"
-                     else f"ours − {v.replace('_', ' ')}")
+            label = {
+                "llm_direct": "LLM-Direct",
+                "no_bottleneck": "w/o Bottleneck",
+            }.get(v, f"ours − {v.replace('_', ' ')}")
             section_B.append(_row_tuple(rs, label))
 
     # Print table

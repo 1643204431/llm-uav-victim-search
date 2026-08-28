@@ -1,4 +1,4 @@
-"""Validate the complete 111-run experiment result package.
+"""Validate the complete 116-run experiment result package.
 
 This command is offline: it reads only local status/result artifacts and
 never imports an API key or calls a model endpoint.
@@ -18,7 +18,7 @@ RESULTS = ROOT / "results"
 
 AGGREGATES = {
     "exp1_main_current.jsonl": 35,
-    "exp2_ablation_current.jsonl": 15,
+    "exp2_ablation_current.jsonl": 20,
     "exp3_batch_sweep_current.jsonl": 40,
     "exp4_llm_sensitivity_current.jsonl": 20,
     "exp5_case_study_current.jsonl": 1,

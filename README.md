@@ -17,7 +17,7 @@ has two stages:
    worst-case UAV travel time.
 
 The repository contains the simulator, the proposed policy, six conventional
-baselines, three LLM-based comparison/ablation conditions, and the drivers for
+baselines, four LLM-based comparison/ablation conditions, and the drivers for
 all five experiments.
 
 ## Repository Structure
@@ -38,9 +38,9 @@ all five experiments.
 │   └── sar_knowledge.py           Retrieved SAR knowledge
 ├── experiments/
 │   ├── _common.py                 Stable run IDs, checkpoints, and parallel runs
-│   ├── manifest.py                Offline definition of all 111 formal runs
+│   ├── manifest.py                Offline definition of all 116 formal runs
 │   ├── exp1_main_comparison.py    Baselines and proposed method
-│   ├── exp2_ablation.py           LLM-Direct and two ablations
+│   ├── exp2_ablation.py           LLM-Direct and three ablations
 │   ├── exp3_scaling.py            Dispatch-batch sweep
 │   ├── exp4_llm_sensitivity.py    Cross-backbone evaluation
 │   ├── exp5_case_study.py         Qualitative trajectory case study
@@ -70,7 +70,7 @@ python3 -m pip install -r requirements.txt
 ```
 
 The preflight does not load API credentials or call a model. It checks the
-dependencies, regression tests, 111-run manifest, five experiment entry
+dependencies, regression tests, 116-run manifest, five experiment entry
 points, and analysis entry point. A successful run ends with `PREFLIGHT VALID`.
 
 ## API Configuration
@@ -172,13 +172,19 @@ Each row uses seeds 42–46 and `N = B = 10`.
 The clue-derived prior is constructed once from the initial clues; it is not
 an agent that reinterprets the observations with an LLM every cycle.
 
-### Exp. 2: comparison and ablations — 15 runs
+### Exp. 2: comparison and ablations — 20 runs
 
-The three conditions are `llm_direct`, `no_rag`, and `no_cot`, each over
-seeds 42–46 with `N = B = 10`. `llm_direct` asks the LLM to output UAV-cell
-assignments directly. The two ablations remove retrieved knowledge or the
-explicit mobility-reasoning stage. The full-method reference is the Exp. 1
-`ours` row and is not charged or run again.
+The four conditions are `llm_direct`, `no_rag`, `no_cot`, and
+`no_bottleneck`, each over seeds 42–46 with `N = B = 10`. `llm_direct` asks
+the LLM to output UAV-cell assignments directly. The first two component
+ablations remove retrieved knowledge or the explicit mobility-reasoning
+stage. `no_bottleneck` replays each cycle from the matching `ours` run and
+keeps its state, priorities, selected cells, and search outcome, but randomly
+matches the idle UAVs to those cells one-to-one. The random branch is not
+propagated: the next cycle again starts from the corresponding `ours` state.
+Its assignment RNG is independent of the simulator RNG and seeded by the run
+seed. The full-method reference is the Exp. 1 `ours` row and is not charged or
+run again.
 
 If an LLM output is truncated or unusable, the client makes at most one
 additional model call. After two unusable LLM-Direct responses, the baseline
@@ -221,8 +227,8 @@ the simulator only when generating the figure and are not agent inputs.
 The seed-42 `ours` run saves priorities, dispatches, UAV paths, and victim
 trajectories for the qualitative terrain/priority/trajectory figure.
 
-The complete formal manifest therefore contains `35 + 15 + 40 + 20 + 1 =
-111` independent runs.
+The complete formal manifest therefore contains `35 + 20 + 40 + 20 + 1 =
+116` run specifications.
 
 ## Running the Experiments
 
@@ -232,7 +238,7 @@ The complete formal manifest therefore contains `35 + 15 + 40 + 20 + 1 =
 python3 experiments/manifest.py
 ```
 
-This command ends with `VALID: 111 unique runs` and prints the stable ID of
+This command ends with `VALID: 116 unique runs` and prints the stable ID of
 each run.
 
 ### Run one formal configuration
@@ -255,7 +261,7 @@ they define the formal matrix and stable run identities.
 EXP_PARALLEL=16 ./run_all.sh
 ```
 
-The pipeline runs `exp1 → exp2 → exp3 → exp5 → exp4`, validates all 111
+The pipeline runs `exp1 → exp2 → exp3 → exp5 → exp4`, validates all 116
 results, and generates the tables and figures. `EXP_PARALLEL` bounds the
 number of independent runs, not the number of requests made within one run.
 Provider quotas, network capacity, and available CPU/memory may require a
@@ -271,7 +277,7 @@ exp3_ours_N10_B3_s42_deepseek_deepseek-v4-pro_nonthinking
 
 This prevents a checkpoint produced for one fleet or batch configuration from
 being reused by another. Existing directories whose IDs are not in the
-current 111-run manifest are preserved and ignored by formal validation.
+current 116-run manifest are preserved and ignored by formal validation.
 
 Use a driver's `--list-runs` option to inspect exact IDs and `--run-id ID` to
 select one run. A completed run is skipped by default. Add

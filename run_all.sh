@@ -53,7 +53,7 @@ if [[ "${1:-}" == "--preflight" ]]; then
     python3 experiments/exp4_llm_sensitivity.py --list-runs >/dev/null
     python3 experiments/exp5_case_study.py --list-runs >/dev/null
     python3 experiments/analyze.py --help >/dev/null
-    echo "PREFLIGHT VALID: dependencies, test suite, 111-run manifest, five drivers, and analysis entry point"
+    echo "PREFLIGHT VALID: dependencies, test suite, 116-run manifest, five drivers, and analysis entry point"
     exit 0
 fi
 
